@@ -79,6 +79,9 @@ class RoverState():
         self.last_pos = None
         self.stuck_time = 0
 
+        self.black_angles = None
+        self.black_dists = None
+
 # Initialize our rover
 Rover = RoverState()
 

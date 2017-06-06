@@ -77,41 +77,45 @@ def decision_step(Rover):
     rover_print("#points front: {}".format(no_points_front))
     rover_print("average dist front: {}".format(avg_dist_front))
 
-    right_mask = mask(Rover.nav_dists, 0, 15, Rover.nav_angles, -90, 0)
+    right_mask = mask(Rover.nav_dists, 0, 18, Rover.nav_angles, -90, 0)
     right_dists = Rover.nav_dists[right_mask]
 #    right_angles = Rover.nav_angles[right_mask]
     no_points_right = len(right_dists)
     rover_print("# POINTS RIGHT: {}".format(no_points_right))
 
-    front_mask = mask(Rover.nav_dists, 0, 15, Rover.nav_angles, -35, 0)
+    front_mask = mask(Rover.nav_dists, 0, 15, Rover.nav_angles, -35, 35)
     dists_front = Rover.nav_dists[front_mask]
     no_points_front = len(dists_front)
-    rover_print("# POINTS FRONT: {}".format(no_points_front))
+    rover_print("# POINTS FRONT RIGHT: {}".format(no_points_front))
 
     very_front_mask = mask(Rover.nav_dists, 0, 10, Rover.nav_angles, -45, 45)
     dists_very_front = Rover.nav_dists[very_front_mask]
     no_points_very_front = len(dists_very_front)
     rover_print("# POINTS IMMMEDIATE FRONT: {}".format(no_points_very_front))
 
-    very_right_mask = mask(Rover.nav_dists, 0, 10, Rover.nav_angles, -45, -35)
-    dists_very_right = Rover.nav_dists[very_right_mask]
-    no_points_very_right = len(dists_very_right)
-    rover_print("# POINTS IMMMEDIATE RIGHT: {}".format(no_points_very_right))
+    black_right_mask = mask(Rover.black_dists, 0, 20, Rover.black_angles, -90, -35)
+    black_right_dists = Rover.black_dists[black_right_mask]
+    no_points_black_right = len(black_right_dists)
+    rover_print("# BLACK POINTS RIGHT: {}".format(no_points_black_right))
+
+    black_wall_right = False
+    if (no_points_black_right > 1):
+        black_wall_right = True
 
     wall_right = False
-    if (no_points_right < 65):
+    if (no_points_right < 100):
         rover_print("WALL RIGHT")
         wall_right = True
 
     wall_ahead = False
-    if (#(len(dists_front) > 0 and np.max(dists_front) < 5)
-            no_points_front < 20
-            or Rover.nav_dists.shape[0] == 0):
+    if (no_points_right < 10 or \
+        no_points_front < 90 or \
+        Rover.nav_dists.shape[0] == 0):
         rover_print("WALL AHEAD")
         wall_ahead = True
 
     wall_front = False
-    if (no_points_very_front < 30 or no_points_very_right == 0):
+    if (no_points_very_front < 30):
         rover_print("WALL FRONT")
         wall_front = True
 
@@ -151,6 +155,9 @@ def decision_step(Rover):
                 Rover.steer = 15
             # If there's a lack of navigable terrain pixels then go to 'stop' mode
 
+            if black_wall_right:
+                Rover.steer = 15
+
             if wall_ahead and wall_front: # avg_dist_front < 10: #no_points_front < Rover.stop_forward: # or Rover.vel < 0.05:
                     # Set mode to "stop" and hit the brakes!
                     Rover.throttle = 0
@@ -159,24 +166,23 @@ def decision_step(Rover):
                     Rover.steer = 0
                     Rover.mode = 'stop'
 
-
         elif Rover.mode == "stuck":
             # if (Rover.stuck_time + .5 < Rover.total_time):
             Rover.throttle = 0
             Rover.brake = 0
             Rover.steer = 15
 
-            if (Rover.stuck_time + 1 < Rover.total_time):
+            if (Rover.stuck_time + 2 < Rover.total_time):
                 Rover.throttle = 0
                 Rover.brake = 0
                 Rover.steer = -15
 
-            if (Rover.stuck_time + 1.5 < Rover.total_time):
+            if (Rover.stuck_time + 3.3 < Rover.total_time):
                 Rover.throttle = -0.3
                 Rover.brake = 0
                 Rover.steer = 0
 
-            if (Rover.stuck_time + 2.5 < Rover.total_time):
+            if (Rover.stuck_time + 4 < Rover.total_time):
                 Rover.throttle = 0
                 Rover.mode = "stop"
                 Rover.stuck_time = 0
