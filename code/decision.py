@@ -5,7 +5,6 @@ import os
 def rover_print(s):
     print("ROVER: {}".format(s))
 
-
 def select_points(Rover, angle_min, angle_max):
     normalized_angles = Rover.nav_angles * 180/np.pi
     points = (normalized_angles > angle_min) & (normalized_angles < angle_max)
@@ -15,11 +14,9 @@ def select_points(Rover, angle_min, angle_max):
     avg_dist = np.sum(points_bitmap * Rover.nav_dists) / no_points
     return (no_points, avg_dist)
 
-
 def angles_mask(dists, angles, angle_min, angle_max):
     normalized_angles = angles * 180/np.pi
     return (normalized_angles > angle_min) & (normalized_angles < angle_max)
-
 
 def mask(dists, dist_min, dist_max, angles, angle_min, angle_max):
     normalized_angles = angles * 180/np.pi
@@ -33,16 +30,14 @@ def distance(pos1, pos2):
     y_pixel = pos1[1] - pos2[1]
     return np.sqrt(x_pixel**2 + y_pixel**2)
 
-
 # This is where you can build a decision tree for determining throttle, brake and steer
 # commands based on the output of the perception_step() function
 def decision_step(Rover):
+    os.system('clear')
 
     # Implement conditionals to decide what to do given perception data
     # Here you're all set up with some basic functionality but you'll need to
     # improve on this decision tree to do a good job of navigating autonomously!
-
-    os.system('clear')
     rover_print("##############################")
     if (Rover.last_pos):
         rover_print("dist: {}".format(distance(Rover.pos, Rover.last_pos[1])))
@@ -147,18 +142,17 @@ def decision_step(Rover):
                 Rover.throttle = .1
                 Rover.steer = 15
             elif (not wall_ahead and wall_right):
+                Rover.throttle = .2
                 Rover.steer = 0
-                #Rover.throttle = .3
-                Rover.throttle = .2 # np.clip(float(no_points_front) / 3000, .1, .5)
             elif (wall_ahead and wall_right):
                 Rover.throttle = .1
                 Rover.steer = 15
-            # If there's a lack of navigable terrain pixels then go to 'stop' mode
 
             if black_wall_right:
                 Rover.steer = 15
 
-            if wall_ahead and wall_front: # avg_dist_front < 10: #no_points_front < Rover.stop_forward: # or Rover.vel < 0.05:
+            # If there's a lack of navigable terrain pixels then go to 'stop' mode
+            if wall_ahead and wall_front:
                     # Set mode to "stop" and hit the brakes!
                     Rover.throttle = 0
                     # Set brake to stored brake value
@@ -167,7 +161,6 @@ def decision_step(Rover):
                     Rover.mode = 'stop'
 
         elif Rover.mode == "stuck":
-            # if (Rover.stuck_time + .5 < Rover.total_time):
             Rover.throttle = 0
             Rover.brake = 0
             Rover.steer = 15
@@ -186,7 +179,6 @@ def decision_step(Rover):
                 Rover.throttle = 0
                 Rover.mode = "stop"
                 Rover.stuck_time = 0
-
 
         # If we're already in "stop" mode then make different decisions
         elif Rover.mode == 'stop':

@@ -42,7 +42,6 @@ def rover_coords(binary_img):
     y_pixel = -(xpos - binary_img.shape[0]).astype(np.float)
     return x_pixel, y_pixel
 
-
 # Define a function to convert to radial coords in rover space
 def to_polar_coords(x_pixel, y_pixel):
     # Convert (x_pixel, y_pixel) to (distance, angle)
@@ -86,12 +85,9 @@ def pix_to_world(xpix, ypix, xpos, ypos, yaw, world_size, scale):
 
 # Define a function to perform a perspective transform
 def perspect_transform(img, src, dst):
-
     M = cv2.getPerspectiveTransform(src, dst)
     warped = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))# keep same size as input image
-
     return warped
-
 
 # Apply the above functions in succession and update the Rover state accordingly
 def perception_step(Rover):
@@ -103,7 +99,6 @@ def perception_step(Rover):
     worldmap = Rover.worldmap
     scale = 10
 
-    # TODO:
     # NOTE: camera image is coming to you in Rover.img
     image = Rover.img
 
@@ -124,8 +119,13 @@ def perception_step(Rover):
     warped = perspect_transform(image, source, destination)
 
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
+
+    ones = np.ones_like(image[:,:,0])
+    warped_ones = perspect_transform(ones, source, destination)
+
     terrain = terrain_thresh(warped)
-    obstacle = obstacle_thresh(warped)
+    #obstacle = obstacle_thresh(warped)
+    obstacle = warped_ones - terrain
     rock = rock_thresh(warped)
     black = black_thresh(warped)
 
@@ -134,7 +134,7 @@ def perception_step(Rover):
         #          Rover.vision_image[:,:,1] = rock_sample color-thresholded binary image
         #          Rover.vision_image[:,:,2] = navigable terrain color-thresholded binary image
     Rover.vision_image[:,:,0] = obstacle * 255
-    Rover.vision_image[:,:,1] = black * 255
+#    Rover.vision_image[:,:,1] = rock * 255
     Rover.vision_image[:,:,2] = terrain * 255
 
     # 5) Convert map image pixel values to rover-centric coords
@@ -158,7 +158,7 @@ def perception_step(Rover):
         # Example: Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
         #          Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
         #          Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
-    if (Rover.pitch < .05 or Rover.pitch > 359.95 or Rover.roll < .05 or Rover.roll > 359.95):
+    if (Rover.pitch < .001 or Rover.pitch > 359.999 or Rover.roll < .001 or Rover.roll > 359.999):
         Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
         Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
         Rover.worldmap[terrain_y_world, terrain_x_world, 2] += 1
