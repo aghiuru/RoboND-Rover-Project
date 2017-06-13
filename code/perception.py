@@ -1,5 +1,25 @@
 import numpy as np
 import cv2
+import os
+
+def rover_print(s):
+    print("ROVER: {}".format(s))
+
+def mask(dists, dist_min, dist_max, angles, angle_min, angle_max):
+    normalized_angles = angles * 180/np.pi
+    return (normalized_angles > angle_min) & \
+            (normalized_angles < angle_max) & \
+            (dists > dist_min) & \
+            (dists < dist_max)
+
+def no_points_mask(dists, dist_min, dist_max, angles, angle_min, angle_max):
+    masked = mask(dists, dist_min, dist_max, angles, angle_min, angle_max)
+    return len(dists[masked])
+
+def distance(pos1, pos2):
+    x_pixel = pos1[0] - pos2[0]
+    y_pixel = pos1[1] - pos2[1]
+    return np.sqrt(x_pixel**2 + y_pixel**2)
 
 # Identify pixels above the threshold
 # Threshold of RGB > 160 does a nice job of identifying ground pixels only
@@ -134,7 +154,7 @@ def perception_step(Rover):
         #          Rover.vision_image[:,:,1] = rock_sample color-thresholded binary image
         #          Rover.vision_image[:,:,2] = navigable terrain color-thresholded binary image
     Rover.vision_image[:,:,0] = obstacle * 255
-#    Rover.vision_image[:,:,1] = rock * 255
+    Rover.vision_image[:,:,1] = rock * 255
     Rover.vision_image[:,:,2] = terrain * 255
 
     # 5) Convert map image pixel values to rover-centric coords
@@ -158,7 +178,7 @@ def perception_step(Rover):
         # Example: Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
         #          Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
         #          Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
-    if (Rover.pitch < .001 or Rover.pitch > 359.999 or Rover.roll < .001 or Rover.roll > 359.999):
+    if (Rover.pitch < .01 or Rover.pitch > 359.99 or Rover.roll < .01 or Rover.roll > 359.99):
         Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
         Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
         Rover.worldmap[terrain_y_world, terrain_x_world, 2] += 1
@@ -167,5 +187,70 @@ def perception_step(Rover):
     # Update Rover pixel distances and angles
     Rover.nav_dists, Rover.nav_angles = to_polar_coords(xpix_terrain, ypix_terrain)
     Rover.black_dists, Rover.black_angles = to_polar_coords(xpix_black, ypix_black)
+
+    os.system('clear')
+
+    rover_print("Time: {}".format(Rover.total_time))
+    rover_print("Last position: {}".format(Rover.last_pos))
+    rover_print("Velocity: {}".format(Rover.vel))
+    if (Rover.last_pos):
+        rover_print("Distance from last position: {}".format(distance(Rover.pos, Rover.last_pos[1])))
+
+    # Tracks positions so that it makes sure it's not stuck.
+    if (Rover.last_pos is None):
+        Rover.last_pos = (Rover.total_time, Rover.pos)
+    else:
+        last_time = Rover.last_pos[0]
+        current_time = Rover.total_time
+        if (last_time + 8 < current_time):
+            if (distance(Rover.pos, Rover.last_pos[1]) < .2):
+                Rover.mode = "stuck"
+                Rover.stuck_time = current_time
+            Rover.last_pos = (Rover.total_time, Rover.pos)
+
+    Rover.go_forward = 175
+    Rover.throttle_set = 1
+
+    normalized_angles = Rover.nav_angles * 180/np.pi
+    avg_angle = np.mean(normalized_angles)
+    rover_print("Avg. angle: {}".format(avg_angle))
+
+    avg_dist = np.mean(Rover.nav_dists)
+    rover_print("Avg. dist: {}".format(avg_dist))
+
+#    no_points_front = no_points_mask(Rover.nav_dists, 0, 250, Rover.nav_angles, -25, 0)
+
+    no_points_right = no_points_mask(Rover.nav_dists, 0, 18, Rover.nav_angles, -90, 0)
+    rover_print("# POINTS RIGHT: {}".format(no_points_right))
+
+    no_points_front = no_points_mask(Rover.nav_dists, 0, 15, Rover.nav_angles, -35, 35)
+    rover_print("# POINTS FRONT RIGHT: {}".format(no_points_front))
+
+    no_points_very_front = no_points_mask(Rover.nav_dists, 0, 10, Rover.nav_angles, -45, 45)
+    rover_print("# POINTS IMMMEDIATE FRONT: {}".format(no_points_very_front))
+
+    no_points_black_right = no_points_mask(Rover.black_dists, 0, 20, Rover.black_angles, -90, -35)
+    rover_print("# BLACK POINTS RIGHT: {}".format(no_points_black_right))
+
+    Rover.black_wall_right = False
+    if (no_points_black_right > 1):
+        Rover.black_wall_right = True
+
+    Rover.wall_right = False
+    if (no_points_right < 100):
+        rover_print("WALL RIGHT")
+        Rover.wall_right = True
+
+    Rover.wall_ahead = False
+    if (no_points_right < 10 or \
+        no_points_front < 90 or \
+        Rover.nav_dists.shape[0] == 0):
+        rover_print("WALL AHEAD")
+        Rover.wall_ahead = True
+
+    Rover.wall_front = False
+    if (no_points_very_front < 30):
+        rover_print("WALL FRONT")
+        Rover.wall_front = True
 
     return Rover

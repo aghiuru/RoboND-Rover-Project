@@ -76,11 +76,19 @@ class RoverState():
         self.picking_up = 0 # Will be set to telemetry value data["picking_up"]
         self.send_pickup = False # Set to True to trigger rock pickup
 
+        # Stuck detection
         self.last_pos = None
         self.stuck_time = 0
 
+        # Black rocks detection
         self.black_angles = None
         self.black_dists = None
+
+        # Wall detection
+        self.wall_right = False
+        self.wall_ahead = False
+        self.wall_front = False
+        self.black_wall_right = False
 
 # Initialize our rover
 Rover = RoverState()
