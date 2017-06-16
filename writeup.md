@@ -22,9 +22,10 @@
 
 [//]: # (Image References)
 
-[image1]: ./misc/rover_image.jpg
-[image2]: ./calibration_images/example_grid1.jpg
-[image3]: ./calibration_images/example_rock1.jpg
+[notebook]: ./imgs/notebook.png
+[perception-only]: ./imgs/perception-only.png
+[perception-only-stuck]: ./imgs/perception-only-stuck.png
+[wall-follow]: ./imgs/wall-follow.png
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/916/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.
@@ -47,7 +48,7 @@ Used the same functions for processing camera images.
 
 The terrain and obstacle bitmaps were not complementary, due to all three channels having to be over/below the thresholds. This would turn out to be problematic later on, but I didn't address it in the notebook.
 
-![Screenshot of a processed image][image2]
+![Screenshot of a processed image][notebook]
 
 ### Autonomous Navigation and Mapping
 
@@ -57,7 +58,8 @@ Copied the functions for filtering terrain, obstacles and rocks to the perceptio
 
 Started in autonomous mode and it looked like it would pass already:
 
-![Image of first run results][image1]
+![Image of first run results][perception-only]
+![Image of first run results, stuck][perception-only-stuck]
 
 #### 2. Launching in autonomous mode your rover can navigate and map autonomously.  Explain your results and how you might improve them in your writeup.
 
@@ -145,4 +147,4 @@ self.black_wall_right = False
 
 Some fidelity was lost due to the rover constantly turning left and right, so I added thresholds for pitch and roll angles when updating the world map: ```359.99 < angle < 0.01```.
 
-![alt text][image3]
+![Wall follower, results][wall-follow]
