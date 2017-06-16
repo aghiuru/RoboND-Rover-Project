@@ -23,7 +23,7 @@ def distance(pos1, pos2):
 
 # Identify pixels above the threshold
 # Threshold of RGB > 160 does a nice job of identifying ground pixels only
-def color_thresh(img, lower_rgb_thresh=(150, 150, 150), upper_rgb_thresh=(255, 255, 255)):
+def color_thresh_any(img, lower_rgb_thresh=(150, 150, 150), upper_rgb_thresh=(255, 255, 255)):
     # Create an array of zeros same xy size as img, but single channel
     color_select = np.zeros_like(img[:,:,0])
     # Require that each pixel be above all three threshold values in RGB
@@ -40,17 +40,37 @@ def color_thresh(img, lower_rgb_thresh=(150, 150, 150), upper_rgb_thresh=(255, 2
     # Return the binary image
     return color_select
 
+# Identify pixels above the threshold
+# Threshold of RGB > 160 does a nice job of identifying ground pixels only
+def color_thresh(img, lower_rgb_thresh=(150, 150, 150), upper_rgb_thresh=(255, 255, 255)):
+    # Create an array of zeros same xy size as img, but single channel
+    color_select = np.zeros_like(img[:,:,0])
+    # Require that each pixel be above all three threshold values in RGB
+    # above_thresh will now contain a boolean array with "True"
+    # where threshold was met
+    above_thresh = ((img[:,:,0] >= lower_rgb_thresh[0]) \
+                & (img[:,:,1] >= lower_rgb_thresh[1]) \
+                & (img[:,:,2] >= lower_rgb_thresh[2])) & \
+                ((img[:,:,0] < upper_rgb_thresh[0]) \
+                & (img[:,:,1] < upper_rgb_thresh[1]) \
+                & (img[:,:,2] < upper_rgb_thresh[2]))
+    # Index the array of zeros with the boolean array and set to 1
+    color_select[above_thresh] = 1
+    # Return the binary image
+    return color_select
+
+
 def terrain_thresh(img):
-    return color_thresh(img)
+    return color_thresh_any(img, (150, 150, 150), (255, 255, 255))
 
 def obstacle_thresh(img):
-    return color_thresh(img, (1, 1, 1), (150, 150, 150))
+    return color_thresh_any(img, (1, 1, 1), (150, 150, 150))
 
 def rock_thresh(img):
-    return color_thresh(img, (160, 160, 0), (256, 256, 100))
+    return color_thresh(img, (100, 100, 0), (220, 220, 50))
 
 def black_thresh(img):
-    return color_thresh(img, (1, 1, 1), (50, 50, 50))
+    return color_thresh_any(img, (1, 1, 1), (50, 50, 50))
 
 # Define a function to convert to rover-centric coordinates
 def rover_coords(binary_img):
