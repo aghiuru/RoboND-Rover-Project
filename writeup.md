@@ -44,7 +44,12 @@ Added lower and upper thresholds to the original threshold function, and created
 
 #### 2. Populate the `process_image()` function with the appropriate analysis steps to map pixels identifying navigable terrain, obstacles and rock samples into a worldmap.  Run `process_image()` on your test data using the `moviepy` functions provided to create video output of your result.
 
-Used the same functions for processing camera images.
+Used the same functions for processing camera images:
+* perspect_transform to transform the camera image perspective to a top view perspective, then
+* terrain_thresh, obstacle_thresh and rock_thresh to filter terrain, obstacles and yellow rocks from the transformed perspective, then
+* rover_coords to change coords so that the rover's at (0, 0), then
+* pix_to_world for translation and rotation to world map coordinates, then
+* on each channel of the world map (obstacle, navigable, rock), increase the value of the corresponding pixels.
 
 The terrain and obstacle bitmaps were not complementary, due to all three channels having to be over/below the thresholds. This would turn out to be problematic later on, but I didn't address it in the notebook.
 
